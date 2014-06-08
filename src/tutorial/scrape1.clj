@@ -2,9 +2,16 @@
   (:require [net.cgrand.enlive-html :as html]))
 
 (def ^:dynamic *base-url* "https://news.ycombinator.com/")
+(def ^:dynamic *user-agent*
+  "Mozilla/5.0 (fake User-Agent)")
 
 (defn fetch-url [url]
-  (html/html-resource (java.net.URL. url)))
+  (with-open [inputstream (-> (java.net.URL. url)
+                              .openConnection
+                              (doto (.setRequestProperty "User-Agent"
+                                                         *user-agent*))
+                              .getContent)]
+    (html/html-resource inputstream)))
 
 (defn hn-headlines []
   (map html/text (html/select (fetch-url *base-url*) [:td.title :a])))

@@ -3,6 +3,8 @@
             [clojure.string :as str]))
 
 (def ^:dynamic *base-url* "http://nytimes.com/")
+(def ^:dynamic *user-agent*
+  "Mozilla/5.0 (fake User-Agent)")
 
 (def ^:dynamic *story-selector*
      [[:div.story
@@ -20,7 +22,12 @@
 (def ^:dynamic *summary-selector* [html/root :> :.summary])
 
 (defn fetch-url [url]
-  (html/html-resource (java.net.URL. url)))
+  (with-open [inputstream (-> (java.net.URL. url)
+                              .openConnection
+                              (doto (.setRequestProperty "User-Agent"
+                                                         *user-agent*))
+                              .getContent)]
+    (html/html-resource inputstream)))
 
 (defn stories []
   (html/select (fetch-url *base-url*) *story-selector*))
